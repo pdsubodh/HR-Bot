@@ -5,10 +5,9 @@ temp/
 
 # Dependency directories
 venv/
+__pycache__/
+documentSource/
 
-# Build output
-dist/
-build/
 
 # Environment variables
 .env
@@ -20,3 +19,5 @@ build/
 
 #Others
 Help.txt
+_soon.py
+

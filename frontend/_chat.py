@@ -2,6 +2,9 @@ import streamlit as st
 import time
 from datetime import datetime
 from frontutils.responseGeneration import ResponseGeneration
+from frontutils.helper import GetLastChatHistory
+
+
 
 # --- Page setup ---
 st.set_page_config(page_title="HR | Enterprise - ChatBot", page_icon="💬", layout="wide")
@@ -90,8 +93,16 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 # --- Placeholder backend function ---
-def get_rag_response(query: str) -> str:    
-    response = ResponseGeneration(query)
+def get_rag_response(query: str) -> str:
+    #st.write("Generating response...")  
+
+    # ✅ Define limited memory (last 3 conversation turns only)
+    
+    lastChatContext = GetLastChatHistory(3)
+    #st.write("DEBUG chat_history:", st.session_state.chat_history)
+    response = ResponseGeneration(query, lastChatContext)
+    #response = "BOT response:: " + query
+    #time.sleep(5)  # Simulate processing delay    
     return response
 
 # --- Chat container ---
@@ -135,8 +146,19 @@ if user_input:
         "time": datetime.now().strftime("%H:%M")
     })
 
+    st.markdown(f"""
+                <div class="msg-row user-row">
+                    <div class="message user-msg">
+                        {user_input}
+                        <span class="timestamp">{datetime.now().strftime("%H:%M")}</span>
+                    </div>
+                    <img src="https://cdn-icons-png.flaticon.com/128/1077/1077012.png" class="avatar">
+                </div>
+            """, unsafe_allow_html=True)
+
     # Display “typing...” spinner
     with st.spinner("🤖 Bot is typing..."):
+
         full_response = get_rag_response(user_input)
 
         # Typing animation (word by word)

@@ -4,7 +4,7 @@ from utils import UpdatePdfFileVector, CreateDBCollection, ListAllDBCollection, 
 #UpdatePdfFileVector()
 #VerifyDBContent('What is this document for?')
 #RetrievalQADBContent('Provide all employee employee code and name only')
-#RetrievalQADBContent('what is creche policy')
+#RetrievalQADBContent('what is car lease policy')
 #CreateDBCollection()
 #ListAllDBCollection()
 #UpdateEmplyeeVector()
