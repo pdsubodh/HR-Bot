@@ -6,7 +6,14 @@ from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.runnables import RunnableMap, RunnablePassthrough, RunnableLambda
 from langchain_core.output_parsers import StrOutputParser
+from langsmith import traceable
 import re
+
+from langchain_core.globals import set_llm_cache
+from langchain_core.caches import InMemoryCache
+
+# Enable a simple in-memory cache
+set_llm_cache(InMemoryCache())
 
 import os
 from dotenv import load_dotenv
@@ -24,6 +31,7 @@ CHAT_MODEL = os.getenv("CHAT_MODEL")
 
 # --------------------------------------------------------------------------------------------------
 
+@traceable(name='ResponseGeneration', tag=['LLMRespGen'], metadata={'embeddingModel':EMBEDDING_MODEL, 'ChatModel':CHAT_MODEL})   
 def ResponseGeneration(queryParams, lastChatContext):
     
     """
@@ -36,20 +44,25 @@ def ResponseGeneration(queryParams, lastChatContext):
     normalizedInput = queryParams.strip().lower()
     pattern = r"\b(?:{})\b".format("|".join(map(re.escape, greetingInputs)))
     if re.search(pattern, normalizedInput):
-        return "Hey there! 😊 It’s great to see you. How can I help you today?"
+        return "Hey! Great to see you 😊. How can I help you?"
 
 
     clientObj = getQdrantClient()
     embeddings = OpenAIEmbeddings(model=EMBEDDING_MODEL)
-    llm = ChatOpenAI(model=CHAT_MODEL)
+    llm = ChatOpenAI(model=CHAT_MODEL, temperature=0.1, max_tokens=500)
     # Vectorstore retriever
     vectorstore = QdrantVectorStore(
         client=clientObj,
         collection_name=COLLECTION_NAME,
         embedding=embeddings
     )
-    context = vectorstore.as_retriever(search_kwargs={"k": 3})
-    contextDoc = context.invoke(queryParams)
+    context = vectorstore.as_retriever(search_kwargs={"k": 2})
+    config = {
+        'run_name':'VectorRetriever',
+        'tag':['vectorStore','retrieverDocument'],
+        'metadata': {'vectorCount':3,'clientName':'QudantDB'}
+    }
+    contextDoc = context.invoke(queryParams, config=config)
     #print(contextDoc)
     #import streamlit as st
     #st.write("DEBUG chat_history:", contextDoc)
@@ -89,8 +102,12 @@ def ResponseGeneration(queryParams, lastChatContext):
             | StrOutputParser()
         )   
     # Run query
-    
-    response = ragChain.invoke(queryParams)
+    config = {
+        'run_name':'LLMResponse',
+        'tag':['Chain','retrieverDocument'],
+        'metadata': {'LLMName':'OpenAI'}
+    }
+    response = ragChain.invoke(queryParams, config=config)
     return response
     
 

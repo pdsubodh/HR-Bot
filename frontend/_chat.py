@@ -3,11 +3,11 @@ import time
 from datetime import datetime
 from frontutils.responseGeneration import ResponseGeneration
 from frontutils.helper import GetLastChatHistory
-
+from langsmith import traceable
 
 
 # --- Page setup ---
-st.set_page_config(page_title="HR | Enterprise - ChatBot", page_icon="💬", layout="wide")
+st.set_page_config(page_title="HR | Enterprise - ChatBot", page_icon="./favicon.png", layout="wide")
 
 # --- Custom CSS for WhatsApp-like look ---
 st.markdown("""
@@ -93,12 +93,12 @@ if "chat_history" not in st.session_state:
     st.session_state.chat_history = []
 
 # --- Placeholder backend function ---
-def get_rag_response(query: str) -> str:
-    #st.write("Generating response...")  
 
+@traceable(name='getRagResponse', tag=['GeneratingUIResoinse'], metadata={'input':'UserQuery'})   
+def getRagResponse(query: str) -> str:
+    #st.write("Generating response...")  
     # ✅ Define limited memory (last 3 conversation turns only)
-    
-    lastChatContext = GetLastChatHistory(3)
+    lastChatContext = GetLastChatHistory(2)
     #st.write("DEBUG chat_history:", st.session_state.chat_history)
     response = ResponseGeneration(query, lastChatContext)
     #response = "BOT response:: " + query
@@ -157,9 +157,9 @@ if user_input:
             """, unsafe_allow_html=True)
 
     # Display “typing...” spinner
-    with st.spinner("🤖 Bot is typing..."):
+    with st.spinner("🤖 Generating response..."):
 
-        full_response = get_rag_response(user_input)
+        full_response = getRagResponse(user_input)
 
         # Typing animation (word by word)
         response_placeholder = st.empty()

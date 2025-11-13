@@ -1,5 +1,8 @@
 import streamlit as st
-    
+from langsmith import traceable
+
+
+@traceable(name='GetLastChatHistory', tag=['getChatHistory'], metadata={'lastChatCount':'3'})   
 def GetLastChatHistory(turnCount):
 
     lastMsgs = st.session_state.chat_history[-(turnCount*2):]  # 1 turn = user + bot
